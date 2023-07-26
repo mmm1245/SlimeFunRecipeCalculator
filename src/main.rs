@@ -30,8 +30,9 @@ fn main() {
     /*let item = items.get("ENHANCED_FURNACE_2").unwrap();
     println!("item: {item:#?}");*/
     let mut crafter = CraftingCalculator::new();
+    let mut to_craft = Vec::new();
     for arg in std::env::args().skip(1) {
-        let already_have = arg.starts_with('#');
+        let already_have = arg.starts_with('-');
         let processed_arg = if already_have {
             arg.split_at(1).1
         } else {
@@ -51,13 +52,16 @@ fn main() {
                 num,
             )
         } else {
-            crafter.craft(
+            to_craft.push((
                 items
                     .get(id)
                     .expect(format!("item id not found for {}", arg).as_str()),
                 num,
-            );
+            ));
         }
+    }
+    for craft in to_craft {
+        crafter.craft(craft.0, craft.1);
     }
     //crafter.craft(items.get("ENHANCED_FURNACE_2").unwrap(), 1);
     crafter.print(&items);
@@ -179,6 +183,9 @@ impl CraftingCalculator {
             count -= already_crafted;
         }
         let craft_count = (count as f32 / recipe.2 as f32).ceil() as u32;
+        if craft_count == 0 {
+            return;
+        }
         {
             let extra = self.extra_crafts(&item.id);
             *extra += (craft_count * recipe.2) - count;
